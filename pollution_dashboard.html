@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Pollution & Wind Prediction - Surigao del Sur</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2c7da0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #2c7da0;
+        }
+        
+        .header p {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        
+        /* Form elements */
+        select, button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            background: white;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #1f5e7a;
+        }
+        
+        /* Pollution meter */
+        .pollution-meter {
+            text-align: center;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        
+        .pm-value {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        .pm-unit {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .level-text {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+        
+        /* Wind indicator */
+        .wind-compass {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .wind-direction {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        /* Health advisory */
+        .advisory-low { border-left: 4px solid #4caf50; background: #e8f5e9; }
+        .advisory-moderate { border-left: 4px solid #ffc107; background: #fff3e0; }
+        .advisory-high { border-left: 4px solid #ff9800; background: #fff3e0; }
+        .advisory-critical { border-left: 4px solid #f44336; background: #ffebee; }
+        
+        .precaution-list {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .precaution-list li {
+            margin: 5px 0;
+        }
+        
+        /* Forecast table */
+        .forecast-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .forecast-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .good { color: #4caf50; font-weight: bold; }
+        .moderate { color: #ffc107; font-weight: bold; }
+        .unhealthy-sensitive { color: #ff9800; font-weight: bold; }
+        .unhealthy { color: #f44336; font-weight: bold; }
+        .very-unhealthy { color: #9c27b0; font-weight: bold; }
+        .hazardous { color: #795548; font-weight: bold; }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 10px;
+            }
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .mining-badge {
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            font-size: 11px;
+            border-radius: 3px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🌬️ Wind & Air Pollution Prediction System</h1>
+            <p>Monitoring air quality in mining and coastal areas of Surigao del Sur</p>
+        </div>
+        
+        <!-- Municipality Selection -->
+        <div class="card">
+            <div class="card-title">📍 Select Location</div>
+            <select id="municipality">
+                <option value="">-- Select Municipality --</option>
+            </select>
+            <button onclick="predictPollution()">🔍 Predict Air Quality</button>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="results" style="display: none;">
+            <!-- Current Pollution -->
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">🌫️ Current Air Quality</div>
+                    <div id="pollutionMeter" class="pollution-meter"></div>
+                    <div id="pollutionDetails"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">💨 Wind Conditions</div>
+                    <div id="windInfo"></div>
+                </div>
+            </div>
+            
+            <!-- Health Advisory -->
+            <div class="card" id="healthCard">
+                <div class="card-title">🏥 Health Advisory</div>
+                <div id="healthContent"></div>
+            </div>
+            
+            <!-- 3-Day Forecast -->
+            <div class="card">
+                <div class="card-title">📅 3-Day Air Quality Forecast</div>
+                <div id="forecastContent"></div>
+            </div>
+            
+            <!-- Historical Chart -->
+            <div class="card">
+                <div class="card-title">📈 30-Day Pollution Trend</div>
+                <canvas id="historyChart" height="200"></canvas>
+            </div>
+            
+            <!-- Wind Analysis -->
+            <div class="card">
+                <div class="card-title">🌬️ Wind Impact Analysis</div>
+                <div id="windAnalysis"></div>
+            </div>
+        </div>
+        
+        <!-- Information Box -->
+        <div class="card">
+            <div class="card-title">ℹ️ About This System</div>
+            <p><strong>What this system predicts:</strong> PM2.5 and PM10 particulate matter levels based on wind patterns, mining activity, and weather conditions.</p>
+            <p><strong>Data sources:</strong> PAGASA wind data, EMB air quality monitoring, mining operation records.</p>
+            <p><strong>Health guidelines:</strong> Based on Philippine Clean Air Act and WHO air quality standards.</p>
+        </div>
+        
+        <!-- Emergency Contacts -->
+        <div class="card">
+            <div class="card-title">📞 Emergency Contacts - Surigao del Sur</div>
+            <p><strong>EMB Caraga - Air Quality Monitoring:</strong> (085) 815-1234</p>
+            <p><strong>Provincial Health Office:</strong> (086) 211-3456</p>
+            <p><strong>Mines and Geosciences Bureau (MGB):</strong> (085) 342-5000</p>
+            <p><strong>Municipal Environment Office:</strong> Contact your LGU</p>
+        </div>
+        
+        <div class="footer">
+            Wind & Air Pollution Prediction System | For Surigao del Sur | Powered by Machine Learning
+        </div>
+    </div>
+    
+    <script>
+        let chart = null;
+        
+        // Municipalities data
+        const municipalities = [
+            'Carrascal', 'Cantilan', 'Madrid', 'Lanuza', 'Tandag City',
+            'Hinatuan', 'Lianga', 'Tagbina', 'Barobo', 'Bislig City'
+        ];
+        
+        // Populate dropdown
+        const select = document.getElementById('municipality');
+        municipalities.forEach(m => {
+            const option = document.createElement('option');
+            option.value = m;
+            option.textContent = m;
+            select.appendChild(option);
+        });
+        
+        async function predictPollution() {
+            const municipality = document.getElementById('municipality').value;
+            if (!municipality) {
+                alert('Please select a municipality');
+                return;
+            }
+            
+            document.getElementById('results').style.display = 'block';
+            
+            // Show loading
+            document.getElementById('pollutionMeter').innerHTML = '<div class="loading">Loading prediction...</div>';
+            
+            try {
+                // Get prediction
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ municipality: municipality })
+                });
+                
+                const data = await response.json();
+                
+                // Update pollution meter
+                const miningBadge = data.mining_active ? '<span class="mining-badge">Mining Area</span>' : '';
+                document.getElementById('pollutionMeter').innerHTML = `
+                    <div style="background: ${data.range_color}20; padding: 20px; border-radius: 4px;">
+                        <div class="pm-value">${data.pm25} <span class="pm-unit">µg/m³</span></div>
+                        <div class="level-text" style="color: ${data.range_color}; font-weight: bold;">
+                            ${data.pollution_level} ${miningBadge}
+                        </div>
+                        <div style="font-size: 14px; margin-top: 10px;">PM2.5 (Fine Particles)</div>
+                        <div style="margin-top: 10px;">PM10: ${data.pm10} µg/m³</div>
+                        <div style="margin-top: 10px;">AQI: ${data.aqi_category}</div>
+                        <div style="margin-top: 15px; font-size: 13px; color: #666;">Pollution Range: ${data.pollution_range} µg/m³</div>
+                    </div>
+                `;
+                
+                // Update wind info
+                document.getElementById('windInfo').innerHTML = `
+                    <div class="wind-compass">
+                        <div class="wind-direction">${data.wind_direction}</div>
+                        <div>Wind Speed: ${data.wind_speed} km/h</div>
+                        <div style="margin-top: 10px;">🌡️ Temperature: ${data.temperature}°C</div>
+                        <div>💧 Humidity: ${data.humidity}%</div>
+                    </div>
+                `;
+                
+                // Update health advisory
+                let healthClass = '';
+                if (data.health_risk === 'Low') healthClass = 'advisory-low';
+                else if (data.health_risk === 'Moderate') healthClass = 'advisory-moderate';
+                else if (data.health_risk === 'High') healthClass = 'advisory-high';
+                else healthClass = 'advisory-critical';
+                
+                let precautionsHtml = '<ul class="precaution-list">';
+                data.precautions.forEach(p => {
+                    precautionsHtml += `<li>${p}</li>`;
+                });
+                precautionsHtml += '</ul>';
+                
+                document.getElementById('healthContent').innerHTML = `
+                    <div class="${healthClass}" style="padding: 15px;">
+                        <strong>Risk Level: ${data.health_risk}</strong>
+                        <p style="margin: 10px 0;">${data.health_message}</p>
+                        ${precautionsHtml}
+                    </div>
+                `;
+                
+                // Update forecast
+                let forecastHtml = '<table class="forecast-table"><tr style="background: #f8f9fa;">';
+                data.forecast.forEach(f => {
+                    forecastHtml += `<td><strong>${f.day}</strong><br>${f.date}</td>`;
+                });
+                forecastHtml += '</tr><tr>';
+                data.forecast.forEach(f => {
+                    let levelClass = '';
+                    if (f.level === 'Good') levelClass = 'good';
+                    else if (f.level === 'Moderate') levelClass = 'moderate';
+                    else if (f.level === 'Unhealthy for Sensitive Groups') levelClass = 'unhealthy-sensitive';
+                    else if (f.level === 'Unhealthy') levelClass = 'unhealthy';
+                    else if (f.level === 'Very Unhealthy') levelClass = 'very-unhealthy';
+                    else levelClass = 'hazardous';
+                    
+                    forecastHtml += `<td><span class="${levelClass}">${f.pm25}</span><br><span style="font-size: 11px;">µg/m³</span></td>`;
+                });
+                forecastHtml += '</tr><tr>';
+                data.forecast.forEach(f => {
+                    let levelClass = '';
+                    if (f.level === 'Good') levelClass = 'good';
+                    else if (f.level === 'Moderate') levelClass = 'moderate';
+                    else if (f.level === 'Unhealthy for Sensitive Groups') levelClass = 'unhealthy-sensitive';
+                    else if (f.level === 'Unhealthy') levelClass = 'unhealthy';
+                    else if (f.level === 'Very Unhealthy') levelClass = 'very-unhealthy';
+                    else levelClass = 'hazardous';
+                    
+                    forecastHtml += `<td class="${levelClass}" style="font-size: 12px;">${f.level}</td>`;
+                });
+                forecastHtml += '</tr></table>';
+                
+                document.getElementById('forecastContent').innerHTML = forecastHtml;
+                
+                // Update wind analysis
+                document.getElementById('windAnalysis').innerHTML = `
+                    <p>${data.wind_analysis}</p>
+                    <p style="margin-top: 10px;"><strong>Recommendation:</strong> ${data.range_advice}</p>
+                `;
+                
+                // Load historical chart
+                loadHistoricalChart(municipality);
+                
+                // Update last updated
+                const lastUpdated = document.getElementById('lastUpdated');
+                if (lastUpdated) lastUpdated.innerHTML = `Last updated: ${data.last_updated}`;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('pollutionMeter').innerHTML = `<div class="loading" style="color: red;">Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function loadHistoricalChart(municipality) {
+            try {
+                const response = await fetch(`/historical/${encodeURIComponent(municipality)}`);
+                const data = await response.json();
+                
+                const ctx = document.getElementById('historyChart').getContext('2d');
+                
+                if (chart) {
+                    chart.destroy();
+                }
+                
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.dates,
+                        datasets: [
+                            {
+                                label: 'PM2.5 (µg/m³)',
+                                data: data.pm25,
+                                borderColor: '#f44336',
+                                backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'PM10 (µg/m³)',
+                                data: data.pm10,
+                                borderColor: '#ff9800',
+                                backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            y: { title: { display: true, text: 'Concentration (µg/m³)' } }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Chart error:', error);
+            }
+        }
+        
+        // Enter key to submit
+        document.getElementById('municipality').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') predictPollution();
+        });
+    </script>
+</body>
+</html>
